@@ -17,12 +17,14 @@
 
 
 int start_gdb(int port) {
-    char symbol_s[100], remote_s[100];
+    char symbol_s[100], remote_s[100], br_s[100];
     const char *exec = "riscv64-unknown-elf-gdb";
 
+    eprintf("I'm run here\n");
     // snprintf(symbol_s, sizeof(symbol_s), "symbol %s", symbol_file);
     snprintf(remote_s, sizeof(remote_s), "target remote 127.0.0.1:%d", port);
-    execlp(exec, exec, "-ex", symbol_s, "-ex", remote_s, NULL);
+    snprintf(br_s, sizeof(br_s), "set riscv use-compressed-breakpoints on");
+    execlp(exec, exec, "-ex", symbol_s, "-ex", remote_s, "-ex", br_s, NULL);
 
     return -1;
 }

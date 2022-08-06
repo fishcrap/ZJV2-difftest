@@ -2,6 +2,7 @@
 #include <iostream>
 
 VTileForVerilator *dut;
+extern uint64_t dump_start;
 
 void dut_reset(int cycle, VerilatedVcdC *vfp, VerilatedContext *context) {
     for (int i = 0; i < cycle; i++) {
@@ -38,11 +39,15 @@ void dut_step(int cycle, VerilatedVcdC *vfp, VerilatedContext *context) {
         dut->clock = 0;
         dut->eval();
         context->timeInc(1);
-        vfp->dump(context->time());
+        if (context->time() > dump_start) {
+            vfp->dump(context->time());
+        }
         dut->clock = 1;
         dut->eval();
         context->timeInc(1);
-        vfp->dump(context->time());
+        if (context->time() > dump_start) {
+            vfp->dump(context->time());
+        }
     }
 }
 
@@ -100,38 +105,38 @@ void dut_getregs(qemu_regs_t *regs) {
     regs->gpr[29] = dut->io_difftest_gprs_29;
     regs->gpr[30] = dut->io_difftest_gprs_30;
     regs->gpr[31] = dut->io_difftest_gprs_31;
-    regs->fpr[33] = dut->io_difftest_fprs_0;
-    regs->fpr[34] = dut->io_difftest_fprs_1;
-    regs->fpr[35] = dut->io_difftest_fprs_2;
-    regs->fpr[36] = dut->io_difftest_fprs_3;
-    regs->fpr[37] = dut->io_difftest_fprs_4;
-    regs->fpr[38] = dut->io_difftest_fprs_5;
-    regs->fpr[39] = dut->io_difftest_fprs_6;
-    regs->fpr[40] = dut->io_difftest_fprs_7;
-    regs->fpr[41] = dut->io_difftest_fprs_8;
-    regs->fpr[42] = dut->io_difftest_fprs_9;
-    regs->fpr[43] = dut->io_difftest_fprs_10;
-    regs->fpr[44] = dut->io_difftest_fprs_11;
-    regs->fpr[45] = dut->io_difftest_fprs_12;
-    regs->fpr[46] = dut->io_difftest_fprs_13;
-    regs->fpr[47] = dut->io_difftest_fprs_14;
-    regs->fpr[48] = dut->io_difftest_fprs_15;
-    regs->fpr[49] = dut->io_difftest_fprs_16;
-    regs->fpr[50] = dut->io_difftest_fprs_17;
-    regs->fpr[51] = dut->io_difftest_fprs_18;
-    regs->fpr[52] = dut->io_difftest_fprs_19;
-    regs->fpr[53] = dut->io_difftest_fprs_20;
-    regs->fpr[54] = dut->io_difftest_fprs_21;
-    regs->fpr[55] = dut->io_difftest_fprs_22;
-    regs->fpr[56] = dut->io_difftest_fprs_23;
-    regs->fpr[57] = dut->io_difftest_fprs_24;
-    regs->fpr[58] = dut->io_difftest_fprs_25;
-    regs->fpr[59] = dut->io_difftest_fprs_26;
-    regs->fpr[60] = dut->io_difftest_fprs_27;
-    regs->fpr[61] = dut->io_difftest_fprs_28;
-    regs->fpr[62] = dut->io_difftest_fprs_29;
-    regs->fpr[63] = dut->io_difftest_fprs_30;
-    regs->fpr[64] = dut->io_difftest_fprs_31;
+    // regs->fpr[33] = dut->io_difftest_fprs_0;
+    // regs->fpr[34] = dut->io_difftest_fprs_1;
+    // regs->fpr[35] = dut->io_difftest_fprs_2;
+    // regs->fpr[36] = dut->io_difftest_fprs_3;
+    // regs->fpr[37] = dut->io_difftest_fprs_4;
+    // regs->fpr[38] = dut->io_difftest_fprs_5;
+    // regs->fpr[39] = dut->io_difftest_fprs_6;
+    // regs->fpr[40] = dut->io_difftest_fprs_7;
+    // regs->fpr[41] = dut->io_difftest_fprs_8;
+    // regs->fpr[42] = dut->io_difftest_fprs_9;
+    // regs->fpr[43] = dut->io_difftest_fprs_10;
+    // regs->fpr[44] = dut->io_difftest_fprs_11;
+    // regs->fpr[45] = dut->io_difftest_fprs_12;
+    // regs->fpr[46] = dut->io_difftest_fprs_13;
+    // regs->fpr[47] = dut->io_difftest_fprs_14;
+    // regs->fpr[48] = dut->io_difftest_fprs_15;
+    // regs->fpr[49] = dut->io_difftest_fprs_16;
+    // regs->fpr[50] = dut->io_difftest_fprs_17;
+    // regs->fpr[51] = dut->io_difftest_fprs_18;
+    // regs->fpr[52] = dut->io_difftest_fprs_19;
+    // regs->fpr[53] = dut->io_difftest_fprs_20;
+    // regs->fpr[54] = dut->io_difftest_fprs_21;
+    // regs->fpr[55] = dut->io_difftest_fprs_22;
+    // regs->fpr[56] = dut->io_difftest_fprs_23;
+    // regs->fpr[57] = dut->io_difftest_fprs_24;
+    // regs->fpr[58] = dut->io_difftest_fprs_25;
+    // regs->fpr[59] = dut->io_difftest_fprs_26;
+    // regs->fpr[60] = dut->io_difftest_fprs_27;
+    // regs->fpr[61] = dut->io_difftest_fprs_28;
+    // regs->fpr[62] = dut->io_difftest_fprs_29;
+    // regs->fpr[63] = dut->io_difftest_fprs_30;
+    // regs->fpr[64] = dut->io_difftest_fprs_31;
     // m mode CSR
     regs->array[65] = dut->io_difftest_csrs_mstatus;
     regs->array[66] = dut->io_difftest_csrs_medeleg;

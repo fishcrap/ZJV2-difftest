@@ -45,6 +45,8 @@ prepare:
 	$(CROSS_COMPILE)objcopy -O binary $(TARGET_DIR)/testfile.elf $(TARGET_DIR)/testfile.bin
 	od -t x1 -An -w1 -v $(TARGET_DIR)/testfile.bin > $(TARGET_DIR)/testfile.hex
 
+clean-v:
+	-@rm -rf $(VERILATOR_DEST_DIR) $(TARGET_DIR)/TileForVerilator.v $(TARGET_DIR)/emulator 
 
 clean:
 	-@rm -rf $(TARGET_DIR)

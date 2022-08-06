@@ -10,10 +10,11 @@
 #include "dut.h"
 #include "isa.h"
 #include "ram.h"
+#include "queue.h"
 
 int total_instructions;
 
-#define WAVE_TRACE
+// #define WAVE_TRACE
 // #define IPC_TRACE
 // #define NO_DIFF
 // #define RUN_QEMU_ONLY
@@ -23,6 +24,10 @@ int total_instructions;
 // #define USE_BR_POINT
 #define MIE_MTIE (1 << 7)
 #define MIP_MTIP (1 << 7)
+
+uint64_t dump_start = 18830000;
+// static uint64_t total_time = 0;
+static VerilatedContext* contextp;
 
 // dump qemu registers
 void print_qemu_registers(qemu_regs_t *regs, bool wpc) {
@@ -100,6 +105,7 @@ void difftest_start_qemu(const char *path, int port, int ppid) {
 // 比较寄存器，包括 GPRs 和 CSRs
 const int pc_size = 10;
 static uint64_t last_3_qpcs[pc_size] = {0};
+// static FixedQueue last_dut_pcs(10);
 bool difftest_regs (qemu_regs_t *regs, qemu_regs_t *dut_regs, diff_pcs *dut_pcs) {
     const char *alias[regs_count] = {
         "zero", "ra", "sp", "gp",
@@ -155,6 +161,9 @@ bool difftest_regs (qemu_regs_t *regs, qemu_regs_t *dut_regs, diff_pcs *dut_pcs)
             regs->array[i] = (regs->array[i] & ~MIP_MTIP) | (dut_regs->array[i] & MIP_MTIP);
         }
 #endif
+        // if (i == 67) {// mideleg
+        //     continue;
+        // }
         if (regs->array[i] != dut_regs->array[i]) {
             sleep(0.5);
             for (int j = 0; j < pc_size; j++) {
@@ -222,6 +231,10 @@ bool ysyx_skip_print(qemu_conn_t *conn, uint32_t pc) {
     return qemu_setinst(conn, pc, &nop);
 }
 
+void print_total_time() {
+    printf("\x1B[32mtotal time: %d\x1B[0m\n", contextp->time());
+}
+
 bool is_stop = false;
 void stop(int signo) {
     printf("receive CTRL C INT!\n");
@@ -229,20 +242,31 @@ void stop(int signo) {
     for (int j = 0; j < pc_size; j++) {
         printf("QEMU PC at [0x%016lx]\n", last_3_qpcs[j]);
     }
+    print_total_time();
 }
+
+bool is_abort = false;
+void abort(int signo) {
+    printf("recieve abort signal!\n");
+    is_abort = true;
+    for (int j = 0; j < pc_size; j++) {
+        printf("QEMU PC at [0x%016lx]\n", last_3_qpcs[j]);
+    }
+    print_total_time();
+}
+
 
 int difftest_body(const char *path, int port) {
     int result = 0;
     Verilated::traceEverOn(true);
     VerilatedVcdC* vfp;
-    VerilatedContext* contextp;
+    
     dut = new VTileForVerilator;
     vfp = new VerilatedVcdC;
     contextp = new VerilatedContext;
 #ifdef WAVE_TRACE
     dut->trace(vfp, 99);
     vfp->open("sim.vcd");
-    // dut->dump(0);
 #endif
     qemu_regs_t regs = {0};
     qemu_regs_t dut_regs = {0};
@@ -250,6 +274,7 @@ int difftest_body(const char *path, int port) {
     diff_pcs dut_pcs = {0};
     diff_mmios dut_mmios = {0};
     int bubble_count = 0;
+    uint64_t time_zero_csr = 30;
 
     qemu_conn_t *conn = qemu_connect(port);
     qemu_init(conn);                            // 初始化 GDB，发送 qXfer 命令注册 features 
@@ -270,6 +295,8 @@ int difftest_body(const char *path, int port) {
 
 
     init_ram("testfile.bin", conn);
+    // init_ram("../linux-opensbi.bin", conn);
+    // assert(false);
 
     // set up device under test
     dut_reset(10, vfp, contextp);
@@ -296,6 +323,7 @@ int difftest_body(const char *path, int port) {
 
 
     signal(SIGINT, stop);
+    // signal(SIGABRT, abort);
 #ifdef NO_DIFF
     while(1) {
         if (!is_stop) {
@@ -309,11 +337,21 @@ int difftest_body(const char *path, int port) {
 
 #ifdef RUN_QEMU_ONLY
 #if !defined(NO_DIFF)
+    qemu_break(conn, 0x802000d8);
+    // qemu_continue(conn);
     while(1) {
-        if (!is_stop) {
+        if (!is_stop && !is_abort) {
+            uint64_t csr_data = 0x0;
+            qemu_zero_csr_wpri(conn);
+            qemu_set_csr(conn, 2, 0x0);
             qemu_single_step(conn);
-            // qemu_getregs(conn, &regs);
-            // printf("pc: %lx\n", regs.pc);
+            qemu_getregs(conn, &regs);
+            for (int i = 0; i < pc_size - 1; i++) {
+                last_3_qpcs[i] = last_3_qpcs[i + 1];
+            }
+            last_3_qpcs[pc_size - 1] = regs.pc;
+            
+            printf("pc: %016lx\tmideleg:%016lx\n", regs.pc, regs.mideleg);
         }
         else {
             goto END;
@@ -323,8 +361,10 @@ int difftest_body(const char *path, int port) {
 #endif
 
 #ifdef USE_BR_POINT
-    uint64_t br_point = 0x8000f3b8;
+    uint64_t br_point = 0x802000d8;
+    br_point = 0x8000d058;
     bool first_hit = true;
+    bool hit_2nd_inst = false;
     qemu_break(conn, br_point);
     qemu_continue(conn);
     qemu_getregs(conn, &regs);
@@ -333,7 +373,8 @@ int difftest_body(const char *path, int port) {
 
 
     while (1) {
-        if (is_stop) break;
+        if (is_stop || is_abort) break;
+        if (contextp->time() == time_zero_csr) { qemu_zero_csr_wpri(conn); }
         dut_step(1, vfp, contextp);
         if (check_and_close_difftest(conn, vfp, contextp))
             return 0;
@@ -363,24 +404,35 @@ int difftest_body(const char *path, int port) {
             if (first_hit) {
                 sleep(0.25);
                 printf("hit DUT pc [%016lx]\n", br_point);
+                int idx = -1;
+                for (int i = 0; i < 3; i++) {
+                    if (dut_pcs.mycpu_pcs[i] == br_point) {
+                        idx = i;
+                        break;
+                    }
+                }
+                int orders[3] = {dut->io_difftest_orders_0, dut->io_difftest_orders_1, dut->io_difftest_orders_2};
+                if (orders[idx] == 1) {
+                    hit_2nd_inst = true;
+                }
             }
-
             first_hit = false;
         }
-#endif
         for (int i = 0; i < dut_commit(); i++) {
-            // get current instruction
-            // inst_t inst = qemu_getinst(conn, regs.pc);
-           
-            // if (inst_is_load_uart(inst, &regs)) {
-            //     printf("[DEBUG] is load uart | pc: %08x | inst: %08x\n", regs.pc, inst.val);
-            //     for (int i = 0; i < 32; ++i) {
-            //         dut_sync_reg(i, regs.gpr[i], true);
-            //     }
-            // }
-            // if (inst_is_print(inst)) {
-            //     ysyx_skip_print(conn, regs.pc);
-            // }
+            if (hit_2nd_inst) {
+                hit_2nd_inst = false;
+                continue;
+            }
+            qemu_single_step(conn);
+#ifdef SYNC_TIME_INT
+            qemu_disable_int(conn);
+#endif
+        }
+
+
+
+#else
+        for (int i = 0; i < dut_commit(); i++) {
             qemu_single_step(conn);
 #ifdef SYNC_TIME_INT
             qemu_disable_int(conn);
@@ -400,7 +452,8 @@ int difftest_body(const char *path, int port) {
             printf("==============\n");
 #endif
         }
-        
+
+#endif
 
 #ifdef SYNC_MMIO
         dut_getmmios(&dut_mmios);
@@ -444,6 +497,7 @@ int difftest_body(const char *path, int port) {
             print_qemu_registers(&dut_regs, false);
             printf("\n");
             result = 1;
+            print_total_time();
             break;
         }
     }

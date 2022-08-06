@@ -35,7 +35,9 @@ const char* init_cmds[] = {
     "qXfer:features:read:riscv-csr.xml:0,ffb",          // riscv-csr.xml
     "qXfer:features:read:riscv-csr.xml:7fd,ffb",        
     "qXfer:features:read:riscv-csr.xml:ffa,ffb",      
-    "qXfer:features:read:riscv-csr.xml:17f7,ffb"
+    "qXfer:features:read:riscv-csr.xml:17f7,ffb",
+    // "qRcmd,help,breakpoints"
+    // "qRcmd,set:riscv:use-compressed-breakpoints:on"
 };
 
 const int csr_num_list[csrs_count] = {
@@ -59,6 +61,144 @@ const int csr_num_list[csrs_count] = {
         0x189,  // stval
         0x18a,  // sip 
     };
+// reg name=sstatus, regnum=0x146
+// reg name=sie, regnum=0x14a
+// reg name=stvec, regnum=0x14b
+// reg name=scounteren, regnum=0x14c
+// reg name=sscratch, regnum=0x186
+// reg name=sepc, regnum=0x187
+// reg name=scause, regnum=0x188
+// reg name=stval, regnum=0x189
+// reg name=sip, regnum=0x18a
+// reg name=satp, regnum=0x1c6
+// reg name=mstatus, regnum=0x346
+// reg name=misa, regnum=0x347
+// reg name=medeleg, regnum=0x348
+// reg name=mideleg, regnum=0x349
+// reg name=mie, regnum=0x34a
+// reg name=mtvec, regnum=0x34b
+// reg name=mcounteren, regnum=0x34c
+// reg name=mhpmevent3, regnum=0x369
+// reg name=mhpmevent4, regnum=0x36a
+// reg name=mhpmevent5, regnum=0x36b
+// reg name=mhpmevent6, regnum=0x36c
+// reg name=mhpmevent7, regnum=0x36d
+// reg name=mhpmevent8, regnum=0x36e
+// reg name=mhpmevent9, regnum=0x36f
+// reg name=mhpmevent10, regnum=0x370
+// reg name=mhpmevent11, regnum=0x371
+// reg name=mhpmevent12, regnum=0x372
+// reg name=mhpmevent13, regnum=0x373
+// reg name=mhpmevent14, regnum=0x374
+// reg name=mhpmevent15, regnum=0x375
+// reg name=mhpmevent16, regnum=0x376
+// reg name=mhpmevent17, regnum=0x377
+// reg name=mhpmevent18, regnum=0x378
+// reg name=mhpmevent19, regnum=0x379
+// reg name=mhpmevent20, regnum=0x37a
+// reg name=mhpmevent21, regnum=0x37b
+// reg name=mhpmevent22, regnum=0x37c
+// reg name=mhpmevent23, regnum=0x37d
+// reg name=mhpmevent24, regnum=0x37e
+// reg name=mhpmevent25, regnum=0x37f
+// reg name=mhpmevent26, regnum=0x380
+// reg name=mhpmevent27, regnum=0x381
+// reg name=mhpmevent28, regnum=0x382
+// reg name=mhpmevent29, regnum=0x383
+// reg name=mhpmevent30, regnum=0x384
+// reg name=mhpmevent31, regnum=0x385
+// reg name=mscratch, regnum=0x386
+// reg name=mepc, regnum=0x387
+// reg name=mcause, regnum=0x388
+// reg name=mtval, regnum=0x389
+// reg name=mip, regnum=0x38a
+// reg name=pmpcfg0, regnum=0x3e6
+// reg name=pmpcfg1, regnum=0x3e7
+// reg name=pmpcfg2, regnum=0x3e8
+// reg name=pmpcfg3, regnum=0x3e9
+// reg name=pmpaddr0, regnum=0x3f6
+// reg name=pmpaddr1, regnum=0x3f7
+// reg name=pmpaddr2, regnum=0x3f8
+// reg name=pmpaddr3, regnum=0x3f9
+// reg name=pmpaddr4, regnum=0x3fa
+// reg name=pmpaddr5, regnum=0x3fb
+// reg name=pmpaddr6, regnum=0x3fc
+// reg name=pmpaddr7, regnum=0x3fd
+// reg name=pmpaddr8, regnum=0x3fe
+// reg name=pmpaddr9, regnum=0x3ff
+// reg name=pmpaddr10, regnum=0x400
+// reg name=pmpaddr11, regnum=0x401
+// reg name=pmpaddr12, regnum=0x402
+// reg name=pmpaddr13, regnum=0x403
+// reg name=pmpaddr14, regnum=0x404
+// reg name=pmpaddr15, regnum=0x405
+// reg name=mcycle, regnum=0xb46
+// reg name=minstret, regnum=0xb48
+// reg name=mhpmcounter3, regnum=0xb49
+// reg name=mhpmcounter4, regnum=0xb4a
+// reg name=mhpmcounter5, regnum=0xb4b
+// reg name=mhpmcounter6, regnum=0xb4c
+// reg name=mhpmcounter7, regnum=0xb4d
+// reg name=mhpmcounter8, regnum=0xb4e
+// reg name=mhpmcounter9, regnum=0xb4f
+// reg name=mhpmcounter10, regnum=0xb50
+// reg name=mhpmcounter11, regnum=0xb51
+// reg name=mhpmcounter12, regnum=0xb52
+// reg name=mhpmcounter13, regnum=0xb53
+// reg name=mhpmcounter14, regnum=0xb54
+// reg name=mhpmcounter15, regnum=0xb55
+// reg name=mhpmcounter16, regnum=0xb56
+// reg name=mhpmcounter17, regnum=0xb57
+// reg name=mhpmcounter18, regnum=0xb58
+// reg name=mhpmcounter19, regnum=0xb59
+// reg name=mhpmcounter20, regnum=0xb5a
+// reg name=mhpmcounter21, regnum=0xb5b
+// reg name=mhpmcounter22, regnum=0xb5c
+// reg name=mhpmcounter23, regnum=0xb5d
+// reg name=mhpmcounter24, regnum=0xb5e
+// reg name=mhpmcounter25, regnum=0xb5f
+// reg name=mhpmcounter26, regnum=0xb60
+// reg name=mhpmcounter27, regnum=0xb61
+// reg name=mhpmcounter28, regnum=0xb62
+// reg name=mhpmcounter29, regnum=0xb63
+// reg name=mhpmcounter30, regnum=0xb64
+// reg name=mhpmcounter31, regnum=0xb65
+// reg name=cycle, regnum=0xc46
+// reg name=time, regnum=0xc47
+// reg name=instret, regnum=0xc48
+// reg name=hpmcounter3, regnum=0xc49
+// reg name=hpmcounter4, regnum=0xc4a
+// reg name=hpmcounter5, regnum=0xc4b
+// reg name=hpmcounter6, regnum=0xc4c
+// reg name=hpmcounter7, regnum=0xc4d
+// reg name=hpmcounter8, regnum=0xc4e
+// reg name=hpmcounter9, regnum=0xc4f
+// reg name=hpmcounter10, regnum=0xc50
+// reg name=hpmcounter11, regnum=0xc51
+// reg name=hpmcounter12, regnum=0xc52
+// reg name=hpmcounter13, regnum=0xc53
+// reg name=hpmcounter14, regnum=0xc54
+// reg name=hpmcounter15, regnum=0xc55
+// reg name=hpmcounter16, regnum=0xc56
+// reg name=hpmcounter17, regnum=0xc57
+// reg name=hpmcounter18, regnum=0xc58
+// reg name=hpmcounter19, regnum=0xc59
+// reg name=hpmcounter20, regnum=0xc5a
+// reg name=hpmcounter21, regnum=0xc5b
+// reg name=hpmcounter22, regnum=0xc5c
+// reg name=hpmcounter23, regnum=0xc5d
+// reg name=hpmcounter24, regnum=0xc5e
+// reg name=hpmcounter25, regnum=0xc5f
+// reg name=hpmcounter26, regnum=0xc60
+// reg name=hpmcounter27, regnum=0xc61
+// reg name=hpmcounter28, regnum=0xc62
+// reg name=hpmcounter29, regnum=0xc63
+// reg name=hpmcounter30, regnum=0xc64
+// reg name=hpmcounter31, regnum=0xc65
+// reg name=mvendorid, regnum=0xf57
+// reg name=marchid, regnum=0xf58
+// reg name=mimpid, regnum=0xf59
+// reg name=mhartid, regnum=0xf5a
 
 int qemu_start(const char *elf, int port) {
     // char remote_s[100];
@@ -386,6 +526,10 @@ void qemu_init(qemu_conn_t *conn) {
         gdb_send(conn, (const uint8_t *) init_cmds[i], strlen(init_cmds[i]));
         size_t size;
         uint8_t *reply = gdb_recv(conn, &size);
+        if (i == 7) {
+            reply[size] = '\0';
+            printf("%s\n", (const char *) gdb_decode_hex_str(reply));
+        }
         free(reply);
     }
 }
@@ -408,4 +552,21 @@ void qemu_enable_int(qemu_conn_t *conn) {
     *mie_data |= enable_mie_mtip;
     qemu_set_csr(conn, mie_num, mie_data);
     free(mie_data);
+}
+
+void qemu_zero_csr_wpri(qemu_conn_t *conn) {
+    const int mstatus_num = 0;
+    const int mideleg_num = 2;
+    const uint64_t mstatus_wpri_mask = 0x8000003f007fffea;
+    const uint64_t mideleg_wpri_mask = 0x0BBB;
+    uint64_t *csr_data = (uint64_t *)malloc(sizeof(uint64_t));
+    
+    qemu_get_csr(conn, mstatus_num, csr_data);
+    *csr_data &= mstatus_wpri_mask;
+    qemu_set_csr(conn, mstatus_num, csr_data);
+
+    qemu_get_csr(conn, mideleg_num, csr_data);
+    *csr_data &= mideleg_wpri_mask;
+    qemu_set_csr(conn, mideleg_num, csr_data);
+    free(csr_data);
 }

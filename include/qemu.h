@@ -51,4 +51,6 @@ void qemu_disable_int(qemu_conn_t *conn);
 
 void qemu_enable_int(qemu_conn_t *conn);
 
+void qemu_zero_csr_wpri(qemu_conn_t *conn);
+
 #endif
